@@ -14,6 +14,7 @@ import (
 
 	"github.com/ChromeTemp/Popup"
 	"github.com/getlantern/systray"
+	"github.com/gouniverse/utils"
 	"github.com/mitchellh/go-ps"
 	"github.com/radovskyb/watcher"
 	"github.com/spf13/viper"
@@ -31,6 +32,45 @@ const (
 	BCK_AUTO    int = 2
 	BCK_TIMEOUT int = 3
 )
+
+func LimitSaveFiles(files []os.DirEntry, limit int) {
+	if len(files) > limit {
+		for i := limit; i < len(files); i++ {
+			fmt.Println("DEBUG")
+			err := os.Remove(ResolvePath(viper.GetString("backupdirectory")) + files[i].Name())
+			if !check(err, false) {
+				fmt.Println("Could not delete file " + files[i].Name() + ". Check that your current user has full permissions over that file.")
+			}
+		}
+	}
+}
+
+func ListBackupsOfType(BCK_TYPE int) []os.DirEntry {
+	var filtered []os.DirEntry
+	fs, err := os.ReadDir(ResolvePath(viper.GetString("backupdirectory")))
+	check(err, true)
+	for _, f := range fs {
+		switch BCK_TYPE {
+		case BCK_TIMEOUT:
+			if strings.HasSuffix(strings.Trim(f.Name(), filepath.Ext(f.Name())), "T") {
+				filtered = append(filtered, f)
+			}
+		case BCK_AUTO:
+			if strings.HasSuffix(strings.Trim(f.Name(), filepath.Ext(f.Name())), "A") {
+				filtered = append(filtered, f)
+			}
+		case BCK_MANUAL:
+			if strings.HasSuffix(strings.Trim(f.Name(), filepath.Ext(f.Name())), "M") {
+				filtered = append(filtered, f)
+			}
+		case BCK_STARTUP:
+			if strings.HasSuffix(strings.Trim(f.Name(), filepath.Ext(f.Name())), "S") {
+				filtered = append(filtered, f)
+			}
+		}
+	}
+	return filtered
+}
 
 func GetSaveName() string {
 	if viper.GetBool("UseSeamlessCoop") {
@@ -91,6 +131,14 @@ func BackupFile(inp_path string, mode int) {
 		bck_path = bck_path + filename + "-" + ctime.Format("20060102_1504") + "T" + ext
 	}
 	CopyFile(file_path, bck_path)
+
+	current_files := utils.ArrayReverse(ListBackupsOfType(mode))
+	if mode == BCK_TIMEOUT && viper.GetInt("limittimeoutbackups") > 0 {
+		LimitSaveFiles(current_files, viper.GetInt("limittimeoutbackups"))
+	}
+	if mode == BCK_AUTO && viper.GetInt("limitautobackups") > 0 {
+		LimitSaveFiles(current_files, viper.GetInt("limitautobackups"))
+	}
 }
 
 func StartWatcher(w *watcher.Watcher) {
@@ -126,7 +174,7 @@ func IntervalledBackup(delay int) {
 	for {
 		select {
 		case <-ticker.C:
-			BackupFile(SAVE_PATH+GetSaveName(), BCK_MANUAL)
+			BackupFile(SAVE_PATH+GetSaveName(), BCK_TIMEOUT)
 		case <-quit:
 			ticker.Stop()
 			return
@@ -167,6 +215,8 @@ func OnStartup() {
 	viper.SetDefault("BackupOnStartup", true)
 	viper.SetDefault("BackupIntervalTimeout", 10)
 	viper.SetDefault("UseSeamlessCoop", true)
+	viper.SetDefault("LimitTimeoutBackups", 0)
+	viper.SetDefault("LimitAutoBackups", 0)
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
@@ -185,6 +235,9 @@ func OnStartup() {
 
 	if viper.GetInt("backupintervaltimeout") > 0 {
 		go IntervalledBackup(viper.GetInt("backupintervaltimeout"))
+	}
+	for _, f := range utils.ArrayReverse(ListBackupsOfType(BCK_TIMEOUT)) {
+		fmt.Println(f.Name())
 	}
 }
 
