@@ -30,6 +30,13 @@ const (
 	BCK_AUTO    int = 2
 )
 
+func GetSaveName() string {
+	if viper.GetBool("UseSeamlessCoop") == true {
+		return "ER0000.co2"
+	}
+	return "ER0000.sl2"
+}
+
 func CopyFile(src string, dst string) {
 	srcFile, err := os.Open(src)
 	check(err)
@@ -85,7 +92,7 @@ func StartWatcher(w *watcher.Watcher) {
 			select {
 			case event := <-w.Event:
 				fmt.Println(event) // Print the event's info.
-				if filepath.Base(event.Path) == "ER0000.co2" {
+				if filepath.Base(event.Path) == GetSaveName() {
 					BackupFile(event.Path, BCK_AUTO)
 				}
 			case err := <-w.Error:
@@ -111,7 +118,7 @@ func IntervalledBackup(delay int) {
 	for {
 		select {
 		case <-ticker.C:
-			BackupFile(SAVE_PATH+"ER0000.co2", BCK_MANUAL)
+			BackupFile(SAVE_PATH+GetSaveName(), BCK_MANUAL)
 		case <-quit:
 			ticker.Stop()
 			return
@@ -141,6 +148,7 @@ func OnStartup() {
 	viper.SetDefault("BackupDirectory", "%appdata%\\EldenRingBackup\\")
 	viper.SetDefault("BackupOnStartup", true)
 	viper.SetDefault("BackupIntervalTimeout", 5)
+	viper.SetDefault("UseSeamlessCoop", true)
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
@@ -153,7 +161,7 @@ func OnStartup() {
 		}
 	}
 	if viper.GetBool("backuponstartup") {
-		BackupFile(SAVE_PATH+"ER0000.co2", BCK_STARTUP)
+		BackupFile(SAVE_PATH+GetSaveName(), BCK_STARTUP)
 	}
 	if viper.GetInt("backupintervaltimeout") > 0 {
 		go IntervalledBackup(viper.GetInt("backupintervaltimeout"))
@@ -181,7 +189,7 @@ func onReady() {
 		for {
 			select {
 			case <-bckMenu.ClickedCh:
-				BackupFile("%appdata%/EldenRing/ER0000.co2", BCK_MANUAL)
+				BackupFile(SAVE_PATH+GetSaveName(), BCK_MANUAL)
 			case <-quitMenu.ClickedCh:
 				systray.Quit()
 			}
