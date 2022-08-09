@@ -29,6 +29,7 @@ const (
 	BCK_STARTUP int = 0
 	BCK_MANUAL  int = 1
 	BCK_AUTO    int = 2
+	BCK_TIMEOUT int = 3
 )
 
 func GetSaveName() string {
@@ -86,6 +87,8 @@ func BackupFile(inp_path string, mode int) {
 		bck_path = bck_path + filename + "-" + ctime.Format("20060102") + "A" + ext
 	case BCK_MANUAL:
 		bck_path = bck_path + filename + "-" + ctime.Format("20060102_1504") + "M" + ext
+	case BCK_TIMEOUT:
+		bck_path = bck_path + filename + "-" + ctime.Format("20060102_1504") + "T" + ext
 	}
 	CopyFile(file_path, bck_path)
 }
