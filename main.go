@@ -165,7 +165,7 @@ func OnStartup() {
 	// SETUP CONFIG FILES
 	viper.SetDefault("BackupDirectory", "%appdata%\\EldenRingBackup\\")
 	viper.SetDefault("BackupOnStartup", true)
-	viper.SetDefault("BackupIntervalTimeout", 5)
+	viper.SetDefault("BackupIntervalTimeout", 10)
 	viper.SetDefault("UseSeamlessCoop", true)
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
