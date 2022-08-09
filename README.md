@@ -53,11 +53,11 @@ There are three different types of backup:
  What follows is a list of all the different configuration options:
  
 - `BackupDirectory`, this is the directory in which all your saves will be backed up. By default this will be `'%appdata%/EldenRingBackup'`.
-- `BackupIntervalTimeout`, this is the time in minutes between the timeout backups. By default five minutes, `5`.
+- `BackupIntervalTimeout`, this is the time in minutes between the timeout backups. By default five minutes, `10`.
 - `BackupOnStartup`, this specifies whether Elden Backup will perform a backup upon startup. By default `true`.
-- `UseSeamlessCoop`, set this to true if you're using the [SeamlessCoop](https://www.nexusmods.com/eldenring/mods/510) mod by [LukeYui](https://www.nexusmods.com/eldenring/users/49594931?tab=about+me). This app was made with SeamlessCoop in mind, as some of its mechanics might break quest triggers, therefore this is set to `true` by default.
 - `LimitTimeoutBackups`, this option allows Elden Backup to only keep a certain number of timeout backups in the backup folder when set to a value greater than zero. By default this is set to `0`.
 - `LimitAutoBackups`, this option allows Elden Backup to only keep a certain number of auto backups in the backup folder when set to a value greater than zero. By default this is set to `0`.
+- `UseSeamlessCoop`, set this to true if you're using the [SeamlessCoop](https://www.nexusmods.com/eldenring/mods/510) mod by [LukeYui](https://www.nexusmods.com/eldenring/users/49594931?tab=about+me). This app was made with SeamlessCoop in mind, as some of its mechanics might break quest triggers, therefore this is set to `true` by default.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
