@@ -3,6 +3,7 @@ package main
 //go:generate goversioninfo -icon=./Icon.ico
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -31,7 +32,7 @@ const (
 )
 
 func GetSaveName() string {
-	if viper.GetBool("UseSeamlessCoop") == true {
+	if viper.GetBool("UseSeamlessCoop") {
 		return "ER0000.co2"
 	}
 	return "ER0000.sl2"
@@ -39,25 +40,29 @@ func GetSaveName() string {
 
 func CopyFile(src string, dst string) {
 	srcFile, err := os.Open(src)
-	check(err)
+	check(err, true)
 	defer srcFile.Close()
 
 	destFile, err := os.Create(dst) // creates if file doesn't exist
-	check(err)
+	check(err, true)
 	defer destFile.Close()
 
 	_, err = io.Copy(destFile, srcFile) // check first var for number of bytes copied
-	check(err)
+	check(err, true)
 
 	err = destFile.Sync()
-	check(err)
+	check(err, true)
 }
 
-func check(err error) {
+func check(err error, exit bool) bool {
 	if err != nil {
 		fmt.Printf("Error : %s\n", err.Error())
-		os.Exit(1)
+		if exit {
+			os.Exit(1)
+		}
+		return false
 	}
+	return true
 }
 
 func ResolvePath(path string) string {
@@ -96,20 +101,20 @@ func StartWatcher(w *watcher.Watcher) {
 					BackupFile(event.Path, BCK_AUTO)
 				}
 			case err := <-w.Error:
-				log.Fatalln(err)
+				log.Fatalln(err, true)
 			case <-w.Closed:
 				return
 			}
 		}
 	}()
 	if err := w.Add(ResolvePath(SAVE_PATH)); err != nil {
-		log.Fatalln(err)
+		log.Fatalln(err, true)
 	}
 	for path, f := range w.WatchedFiles() {
 		fmt.Printf("%s: %s\n", path, f.Name())
 	}
 	if err := w.Start(time.Millisecond * 100); err != nil {
-		log.Fatalln(err)
+		log.Fatalln(err, true)
 	}
 }
 
@@ -131,20 +136,30 @@ func OnStartup() {
 	exName, err := os.Executable()
 	exName = filepath.Base(exName)
 	quit = make(chan bool)
-	check(err)
+	check(err, true)
 
+	// Check if a save file exists
+	var _ os.FileInfo
+	_, err = os.Stat(ResolvePath(SAVE_PATH + GetSaveName()))
+	if errors.Is(err, os.ErrNotExist) {
+		Popup.Alert(APP_TITLE, "No save file was found. Start your adventure and then open "+APP_TITLE+".")
+		os.Exit(0)
+	}
+
+	// Check if another instance is already running
 	pr, err := ps.Processes()
-	check(err)
-	for i, p := range pr {
-		if i == i && p.Executable() == exName {
+	check(err, true)
+	for _, p := range pr {
+		if p.Executable() == exName {
 			c = c + 1
 		}
 	}
 	if c > 1 {
-		Popup.Alert("Elden Backup", "Another instance of the application is already running.")
+		Popup.Alert(APP_TITLE, "Another instance of the application is already running.")
 		os.Exit(-1)
 	}
 
+	// SETUP CONFIG FILES
 	viper.SetDefault("BackupDirectory", "%appdata%\\EldenRingBackup\\")
 	viper.SetDefault("BackupOnStartup", true)
 	viper.SetDefault("BackupIntervalTimeout", 5)
@@ -160,9 +175,11 @@ func OnStartup() {
 			Popup.Alert("Elden Backup", "Unable to read the configuration file. Loading default data. Please, refer to the documentation to solve the issue.")
 		}
 	}
+
 	if viper.GetBool("backuponstartup") {
 		BackupFile(SAVE_PATH+GetSaveName(), BCK_STARTUP)
 	}
+
 	if viper.GetInt("backupintervaltimeout") > 0 {
 		go IntervalledBackup(viper.GetInt("backupintervaltimeout"))
 	}
@@ -177,8 +194,9 @@ func main() {
 
 func onReady() {
 	dat, err := os.ReadFile("./Icon.ico")
-	check(err)
-	systray.SetIcon(dat)
+	if check(err, false) {
+		systray.SetIcon(dat)
+	}
 	systray.SetTitle(APP_TITLE)
 	systray.SetTooltip(APP_TITLE)
 	bckMenu := systray.AddMenuItem("Backup Now", "Execute a backup on the spot.")
