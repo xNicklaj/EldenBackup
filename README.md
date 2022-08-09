@@ -29,6 +29,8 @@ None. I've developed this app in Go so that there were no prerequisites at all, 
 3. Inside the zip you will find EldenBackup.exe and Icon.ico. Extract them both in your Elden Ring folder (or really any folder at all).
 4. Execute EldenBackup.exe and enjoy your game.
 
+Update: you can now download the latest release in the [release tab](https://github.com/xNicklaj/EldenBackup/releases/latest).
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Usage
