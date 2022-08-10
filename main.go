@@ -24,7 +24,9 @@ var wHandle *watcher.Watcher
 var quit chan bool
 
 const APP_TITLE = "Elden Backup"
-const SAVE_PATH = "%appdata%\\EldenRing\\"
+
+// const SAVE_PATH = "%appdata%\\EldenRing\\"
+var SAVE_PATH string
 
 const (
 	BCK_STARTUP int = 0
@@ -189,14 +191,6 @@ func OnStartup() {
 	quit = make(chan bool)
 	check(err, true)
 
-	// Check if a save file exists
-	var _ os.FileInfo
-	_, err = os.Stat(ResolvePath(SAVE_PATH + GetSaveName()))
-	if errors.Is(err, os.ErrNotExist) {
-		Popup.Alert(APP_TITLE, "No save file was found. Start your adventure and then open "+APP_TITLE+".")
-		os.Exit(0)
-	}
-
 	// Check if another instance is already running
 	pr, err := ps.Processes()
 	check(err, true)
@@ -217,6 +211,7 @@ func OnStartup() {
 	viper.SetDefault("UseSeamlessCoop", true)
 	viper.SetDefault("LimitTimeoutBackups", 0)
 	viper.SetDefault("LimitAutoBackups", 0)
+	viper.SetDefault("SavefileDirectory", "%roamingappdata%\\EldenRing\\SteamID\\")
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
@@ -227,6 +222,20 @@ func OnStartup() {
 		} else {
 			Popup.Alert("Elden Backup", "Unable to read the configuration file. Loading default data. Please, refer to the documentation to solve the issue.")
 		}
+	}
+
+	SAVE_PATH = viper.GetString("SavefileDirectory")
+	if SAVE_PATH == "%roamingappdata%\\EldenRing\\SteamID\\" {
+		Popup.Alert("Elden Backup", "Set your save directory in config.yaml to start using Elden Backup.")
+		os.Exit(0)
+	}
+
+	// Check if a save file exists
+	var _ os.FileInfo
+	_, err = os.Stat(ResolvePath(SAVE_PATH + GetSaveName()))
+	if errors.Is(err, os.ErrNotExist) {
+		Popup.Alert(APP_TITLE, "No save file was found. Start your adventure and then open "+APP_TITLE+".")
+		os.Exit(0)
 	}
 
 	if viper.GetBool("backuponstartup") {
