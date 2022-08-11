@@ -18,6 +18,7 @@ import (
 	"github.com/mitchellh/go-ps"
 	"github.com/radovskyb/watcher"
 	"github.com/spf13/viper"
+	"golang.org/x/sys/windows/registry"
 )
 
 var wHandle *watcher.Watcher
@@ -34,6 +35,24 @@ const (
 	BCK_AUTO    int = 2
 	BCK_TIMEOUT int = 3
 )
+
+func GetSteamID() string {
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\WOW6432Node\Valve\Steam`, registry.QUERY_VALUE)
+	if err != nil {
+		check(err, true)
+	}
+	defer k.Close()
+
+	s, _, err := k.GetStringValue("InstallPath")
+	if err != nil {
+		check(err, true)
+	}
+
+	s += "\\userdata\\"
+	fs, err := os.ReadDir(s)
+	check(err, true)
+	return fs[0].Name()
+}
 
 func LimitSaveFiles(files []os.DirEntry, limit int) {
 	if len(files) > limit {
@@ -211,7 +230,7 @@ func OnStartup() {
 	viper.SetDefault("UseSeamlessCoop", true)
 	viper.SetDefault("LimitTimeoutBackups", 0)
 	viper.SetDefault("LimitAutoBackups", 0)
-	viper.SetDefault("SavefileDirectory", "%roamingappdata%\\EldenRing\\SteamID\\")
+	viper.SetDefault("SavefileDirectory", "%appdata%\\EldenRing\\SteamID\\")
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
@@ -225,9 +244,8 @@ func OnStartup() {
 	}
 
 	SAVE_PATH = viper.GetString("SavefileDirectory")
-	if SAVE_PATH == "%roamingappdata%\\EldenRing\\SteamID\\" {
-		Popup.Alert("Elden Backup", "Set your save directory in config.yaml to start using Elden Backup.")
-		os.Exit(0)
+	if SAVE_PATH == "%appdata%\\EldenRing\\SteamID\\" {
+		SAVE_PATH = strings.Replace(SAVE_PATH, "SteamID", GetSteamID(), 1)
 	}
 
 	// Check if a save file exists
