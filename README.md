@@ -43,7 +43,7 @@ There are three different types of backup:
  - **S**tartup backup, this backup happens every time you open EldenBackup.
  - **T**imeout backup, this backup happens every once in a while when you play. By default, it happens every five minutes, but you will be able to change the amount of time between these backups from the configuration file. 
 
- In your backup folder you'll find all your backups in the format: `ER0000_timestampK` where K indicates the type of the backup.
+ In your backup folder you'll find all your backups in the format: `ER0000-steamid-timestampK` where K indicates the type of the backup.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -58,6 +58,8 @@ There are three different types of backup:
 - `LimitTimeoutBackups`, this option allows Elden Backup to only keep a certain number of timeout backups in the backup folder when set to a value greater than zero. By default this is set to `0`.
 - `LimitAutoBackups`, this option allows Elden Backup to only keep a certain number of auto backups in the backup folder when set to a value greater than zero. By default this is set to `0`.
 - `UseSeamlessCoop`, set this to true if you're using the [SeamlessCoop](https://www.nexusmods.com/eldenring/mods/510) mod by [LukeYui](https://www.nexusmods.com/eldenring/users/49594931?tab=about+me). This app was made with SeamlessCoop in mind, as some of its mechanics might break quest triggers, therefore this is set to `true` by default.
+- `SavefileDirectory`, set this to your EldenRing save path. The application should be able to find the savefiles automatically, but in case it doesn,'t, this is what you can change. Defaults at `'%appdata%\EldenRing\SteamId\'`.
+- `SteamId`, set this to your SteamId if you have multiple steam accounts logged in your installation. This is enabled only if SavefileDirectory is kept at its default value. The default value of SteamId is `0`.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -71,7 +73,10 @@ To restore a backup, all you have to do is to copy-paste it inside `%appdata%/El
 
 - [x] Basic backup functionalities.
 - [x] Timeout backups.
-- [x] Keep only the last N amount of auto / timeout saves.
+- [x] Save space by deleting older backups.
+- [x] Automatic detection of the SteamID.
+
+You can check the full changelog <a href="https://github.com/xNicklaj/EldenBackup/releases/">here</a>.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
