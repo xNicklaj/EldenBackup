@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,6 +38,10 @@ const (
 )
 
 func GetSteamID() string {
+	if viper.GetInt("SteamID") > 0 {
+		return strconv.Itoa(viper.GetInt("SteamID"))
+	}
+
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\WOW6432Node\Valve\Steam`, registry.QUERY_VALUE)
 	if err != nil {
 		check(err, true)
@@ -71,6 +76,7 @@ func ListBackupsOfType(BCK_TYPE int) []os.DirEntry {
 	fs, err := os.ReadDir(ResolvePath(viper.GetString("backupdirectory")))
 	check(err, true)
 	for _, f := range fs {
+
 		switch BCK_TYPE {
 		case BCK_TIMEOUT:
 			if strings.HasSuffix(strings.Trim(f.Name(), filepath.Ext(f.Name())), "T") {
@@ -119,6 +125,7 @@ func CopyFile(src string, dst string) {
 func check(err error, exit bool) bool {
 	if err != nil {
 		fmt.Printf("Error : %s\n", err.Error())
+		Popup.Alert("Elden Backup", "Error: "+err.Error())
 		if exit {
 			os.Exit(1)
 		}
@@ -143,13 +150,13 @@ func BackupFile(inp_path string, mode int) {
 
 	switch mode {
 	case BCK_STARTUP:
-		bck_path = bck_path + filename + "-" + ctime.Format("20060102_1504") + "S" + ext
+		bck_path = bck_path + filename + "-" + GetSteamID() + "-" + ctime.Format("20060102_1504") + "S" + ext
 	case BCK_AUTO:
-		bck_path = bck_path + filename + "-" + ctime.Format("20060102") + "A" + ext
+		bck_path = bck_path + filename + "-" + GetSteamID() + "-" + ctime.Format("20060102") + "A" + ext
 	case BCK_MANUAL:
-		bck_path = bck_path + filename + "-" + ctime.Format("20060102_1504") + "M" + ext
+		bck_path = bck_path + filename + "-" + GetSteamID() + "-" + ctime.Format("20060102_1504") + "M" + ext
 	case BCK_TIMEOUT:
-		bck_path = bck_path + filename + "-" + ctime.Format("20060102_1504") + "T" + ext
+		bck_path = bck_path + filename + "-" + GetSteamID() + "-" + ctime.Format("20060102_1504") + "T" + ext
 	}
 	CopyFile(file_path, bck_path)
 
@@ -168,7 +175,6 @@ func StartWatcher(w *watcher.Watcher) {
 		for {
 			select {
 			case event := <-w.Event:
-				fmt.Println(event) // Print the event's info.
 				if filepath.Base(event.Path) == GetSaveName() {
 					BackupFile(event.Path, BCK_AUTO)
 				}
@@ -231,6 +237,7 @@ func OnStartup() {
 	viper.SetDefault("LimitTimeoutBackups", 0)
 	viper.SetDefault("LimitAutoBackups", 0)
 	viper.SetDefault("SavefileDirectory", "%appdata%\\EldenRing\\SteamID\\")
+	viper.SetDefault("SteamID", 0)
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
@@ -262,9 +269,6 @@ func OnStartup() {
 
 	if viper.GetInt("backupintervaltimeout") > 0 {
 		go IntervalledBackup(viper.GetInt("backupintervaltimeout"))
-	}
-	for _, f := range utils.ArrayReverse(ListBackupsOfType(BCK_TIMEOUT)) {
-		fmt.Println(f.Name())
 	}
 }
 
