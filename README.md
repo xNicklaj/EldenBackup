@@ -75,6 +75,8 @@ To restore a backup, all you have to do is to copy-paste it inside `%appdata%/El
 - [x] Timeout backups.
 - [x] Save space by deleting older backups.
 - [x] Automatic detection of the SteamID.
+- [ ] Optionally launch Elden Ring or the Seamless Coop launcher automatically.
+- [ ] Add EXE metadata.
 
 You can check the full changelog <a href="https://github.com/xNicklaj/EldenBackup/releases/">here</a>.
 
