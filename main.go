@@ -14,12 +14,12 @@ import (
 	"time"
 
 	"github.com/ChromeTemp/Popup"
+	"github.com/abdfnx/gosh"
 	"github.com/getlantern/systray"
 	"github.com/gouniverse/utils"
 	"github.com/mitchellh/go-ps"
 	"github.com/radovskyb/watcher"
 	"github.com/spf13/viper"
-	"golang.org/x/sys/windows/registry"
 )
 
 var wHandle *watcher.Watcher
@@ -41,22 +41,26 @@ func GetSteamID() string {
 	if viper.GetInt("SteamID") > 0 {
 		return strconv.Itoa(viper.GetInt("SteamID"))
 	}
-
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\WOW6432Node\Valve\Steam`, registry.QUERY_VALUE)
-	if err != nil {
-		check(err, true)
-	}
-	defer k.Close()
-
-	s, _, err := k.GetStringValue("InstallPath")
-	if err != nil {
-		check(err, true)
-	}
-
-	s += "\\userdata\\"
-	fs, err := os.ReadDir(s)
+	err, out, _ := gosh.RunOutput(`$SteamID = reg query HKEY_CURRENT_USER\SOFTWARE\Valve\Steam\ActiveProcess /v ActiveUser; $__SteamID = [uint32]($SteamID[2] -replace ".*(?=0x)",""); echo $__SteamID`)
 	check(err, true)
-	return fs[0].Name()
+
+	steamid := strings.Replace(out, "\n", "", -1)
+	fs, err := os.ReadDir(ResolvePath("%appdata%\\EldenRing\\"))
+	check(err, true)
+
+	for _, f := range fs {
+		if f.Name() == steamid {
+			return steamid
+		}
+	}
+
+	for _, f := range fs {
+		if _, err := strconv.Atoi(f.Name()); err == nil {
+			return f.Name()
+		}
+	}
+
+	return "0"
 }
 
 func LimitSaveFiles(files []os.DirEntry, limit int) {
@@ -252,7 +256,13 @@ func OnStartup() {
 
 	SAVE_PATH = viper.GetString("SavefileDirectory")
 	if SAVE_PATH == "%appdata%\\EldenRing\\SteamID\\" {
-		SAVE_PATH = strings.Replace(SAVE_PATH, "SteamID", GetSteamID(), 1)
+		steamid := GetSteamID()
+		if steamid == "0" {
+			Popup.Alert(APP_TITLE, "Steam needs to be open to use the SteamID autodetection. Open Steam and run the application again or manually set the SteamID in the configuration files.")
+			os.Exit(0)
+		}
+		SAVE_PATH = strings.Replace(SAVE_PATH, "SteamID", steamid, 1)
+		fmt.Println(SAVE_PATH)
 	}
 
 	// Check if a save file exists

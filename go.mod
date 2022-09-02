@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/ChromeTemp/Popup v1.2.0 // indirect
+	github.com/abdfnx/gosh v0.3.9 // indirect
 	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/cratonica/trayhost v0.0.0-20150112162955-98495206fd96 // indirect
 	github.com/darkoatanasovski/htmltags v1.0.0 // indirect
