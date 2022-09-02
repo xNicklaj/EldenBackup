@@ -14,10 +14,6 @@ jobs:
       uses: actions/setup-go@v3
       with:
         go-version: 1.18
-    - name: Install Goversioninfo
-      run: go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
-    - name: Go Generate
-      run: go generate
     - name: Go Build
       run: go build -ldflags -H=windowsgui -v ./...
       env:
