@@ -24,6 +24,7 @@ import (
 
 var wHandle *watcher.Watcher
 var quit chan bool
+var STEAMID string
 
 const APP_TITLE = "Elden Backup"
 
@@ -112,7 +113,10 @@ func GetSaveName() string {
 
 func CopyFile(src string, dst string) {
 	srcFile, err := os.Open(src)
-	check(err, true)
+	readError := check(err, false)
+	if readError {
+		return
+	}
 	defer srcFile.Close()
 
 	destFile, err := os.Create(dst) // creates if file doesn't exist
@@ -154,13 +158,13 @@ func BackupFile(inp_path string, mode int) {
 
 	switch mode {
 	case BCK_STARTUP:
-		bck_path = bck_path + filename + "-" + GetSteamID() + "-" + ctime.Format("20060102_1504") + "S" + ext
+		bck_path = bck_path + filename + "-" + STEAMID + "-" + ctime.Format("20060102_1504") + "S" + ext
 	case BCK_AUTO:
-		bck_path = bck_path + filename + "-" + GetSteamID() + "-" + ctime.Format("20060102") + "A" + ext
+		bck_path = bck_path + filename + "-" + STEAMID + "-" + ctime.Format("20060102") + "A" + ext
 	case BCK_MANUAL:
-		bck_path = bck_path + filename + "-" + GetSteamID() + "-" + ctime.Format("20060102_1504") + "M" + ext
+		bck_path = bck_path + filename + "-" + STEAMID + "-" + ctime.Format("20060102_1504") + "M" + ext
 	case BCK_TIMEOUT:
-		bck_path = bck_path + filename + "-" + GetSteamID() + "-" + ctime.Format("20060102_1504") + "T" + ext
+		bck_path = bck_path + filename + "-" + STEAMID + "-" + ctime.Format("20060102_1504") + "T" + ext
 	}
 	CopyFile(file_path, bck_path)
 
@@ -262,6 +266,7 @@ func OnStartup() {
 			os.Exit(0)
 		}
 		SAVE_PATH = strings.Replace(SAVE_PATH, "SteamID", steamid, 1)
+		STEAMID = steamid
 		fmt.Println(SAVE_PATH)
 	}
 
