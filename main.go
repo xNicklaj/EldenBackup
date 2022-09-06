@@ -114,7 +114,7 @@ func GetSaveName() string {
 func CopyFile(src string, dst string) {
 	srcFile, err := os.Open(src)
 	readError := check(err, false)
-	if readError {
+	if !readError {
 		return
 	}
 	defer srcFile.Close()
