@@ -150,7 +150,11 @@ func check(err error, exit bool) bool {
 }
 
 func ResolvePath(path string) string {
-	return strings.Replace(path, "%appdata%", os.Getenv("APPDATA"), -1)
+	path = strings.ToLower(path)
+	s := strings.Replace(path, "%appdata%", os.Getenv("APPDATA"), -1)
+	s = strings.Replace(s, "%localappdata%", os.Getenv("LOCALAPPDATA"), -1)
+	s = strings.Replace(s, "%userprofile%", os.Getenv("USERPROFILE"), -1)
+	return s
 }
 
 func BackupFile(inp_path string, mode int) {
@@ -228,7 +232,7 @@ func IntervalledBackup(delay int) {
 }
 
 func Log(path string, s string) {
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	f, err := os.OpenFile(ResolvePath(path), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
