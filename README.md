@@ -55,8 +55,10 @@ There are three different types of backup:
 - `BackupDirectory`, this is the directory in which all your saves will be backed up. By default this will be `'%appdata%/EldenRingBackup'`.
 - `BackupIntervalTimeout`, this is the time in minutes between the timeout backups. By default five minutes, `10`.
 - `BackupOnStartup`, this specifies whether Elden Backup will perform a backup upon startup. By default `true`.
+- `EnableLogging`, this specifies whether to create logs or not. By default `true`.
 - `LimitTimeoutBackups`, this option allows Elden Backup to only keep a certain number of timeout backups in the backup folder when set to a value greater than zero. By default this is set to `0`.
 - `LimitAutoBackups`, this option allows Elden Backup to only keep a certain number of auto backups in the backup folder when set to a value greater than zero. By default this is set to `0`.
+- `LogsPath`, this options allows to specify the path of the file in which you want Elden Backup to save its logs. Defaults to `'.\logs.txt'`.
 - `UseSeamlessCoop`, set this to true if you're using the [SeamlessCoop](https://www.nexusmods.com/eldenring/mods/510) mod by [LukeYui](https://www.nexusmods.com/eldenring/users/49594931?tab=about+me). This app was made with SeamlessCoop in mind, as some of its mechanics might break quest triggers, therefore this is set to `true` by default.
 - `SavefileDirectory`, set this to your EldenRing save path. The application should be able to find the savefiles automatically, but in case it doesn,'t, this is what you can change. Defaults at `'%appdata%\EldenRing\SteamId\'`.
 - `SteamId`, set this to your SteamId if you have multiple steam accounts logged in your installation. This is enabled only if SavefileDirectory is kept at its default value. The default value of SteamId is `0`.

@@ -25,6 +25,7 @@ import (
 var wHandle *watcher.Watcher
 var quit chan bool
 var STEAMID string
+var Logger *log.Logger
 
 const APP_TITLE = "Elden Backup"
 
@@ -134,8 +135,14 @@ func check(err error, exit bool) bool {
 	if err != nil {
 		fmt.Printf("Error : %s\n", err.Error())
 		Popup.Alert("Elden Backup", "Error: "+err.Error())
+		if viper.GetBool("EnableLogging") {
+			Log(viper.GetString("LogsPath"), "Error"+err.Error()+"encountered.")
+		}
 		if exit {
-			os.Exit(1)
+			if viper.GetBool("EnableLogging") {
+				Log(viper.GetString("LogsPath"), "Shutting down the application due to an error.")
+			}
+			os.Exit(-1)
 		}
 		return false
 	}
@@ -167,6 +174,9 @@ func BackupFile(inp_path string, mode int) {
 		bck_path = bck_path + filename + "-" + STEAMID + "-" + ctime.Format("20060102_1504") + "T" + ext
 	}
 	CopyFile(file_path, bck_path)
+	if viper.GetBool("EnableLogging") {
+		Log(viper.GetString("LogsPath"), "Backup executed at "+bck_path+".")
+	}
 
 	current_files := utils.ArrayReverse(ListBackupsOfType(mode))
 	if mode == BCK_TIMEOUT && viper.GetInt("limittimeoutbackups") > 0 {
@@ -217,6 +227,17 @@ func IntervalledBackup(delay int) {
 	}
 }
 
+func Log(path string, s string) {
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	logger := log.New(f, "", log.LstdFlags)
+	logger.Println(s)
+}
+
 func OnStartup() {
 	c := 0
 	exName, err := os.Executable()
@@ -245,6 +266,8 @@ func OnStartup() {
 	viper.SetDefault("LimitTimeoutBackups", 0)
 	viper.SetDefault("LimitAutoBackups", 0)
 	viper.SetDefault("SavefileDirectory", "%appdata%\\EldenRing\\SteamID\\")
+	viper.SetDefault("EnableLogging", false)
+	viper.SetDefault("LogsPath", ".\\logs.txt")
 	viper.SetDefault("SteamID", 0)
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -258,6 +281,13 @@ func OnStartup() {
 		}
 	}
 
+	// Clear log file
+	if viper.GetBool("EnableLogging") {
+		if err := os.Truncate(viper.GetString("LogsPath"), 0); err != nil {
+			log.Printf("Failed to clear: %v", err)
+		}
+	}
+
 	SAVE_PATH = viper.GetString("SavefileDirectory")
 	if SAVE_PATH == "%appdata%\\EldenRing\\SteamID\\" {
 		steamid := GetSteamID()
@@ -268,6 +298,9 @@ func OnStartup() {
 		SAVE_PATH = strings.Replace(SAVE_PATH, "SteamID", steamid, 1)
 		STEAMID = steamid
 		fmt.Println(SAVE_PATH)
+		if viper.GetBool("EnableLogging") {
+			Log(viper.GetString("LogsPath"), "Saves directory found at "+SAVE_PATH+" for steam id "+STEAMID+".")
+		}
 	}
 
 	// Check if a save file exists
@@ -309,6 +342,9 @@ func onReady() {
 		for {
 			select {
 			case <-bckMenu.ClickedCh:
+				if viper.GetBool("EnableLogging") {
+					Log(viper.GetString("LogsPath"), "Manual backup requested via system tray.")
+				}
 				BackupFile(SAVE_PATH+GetSaveName(), BCK_MANUAL)
 			case <-quitMenu.ClickedCh:
 				systray.Quit()
