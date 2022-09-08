@@ -4,7 +4,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -70,10 +69,11 @@ func GetSteamID() string {
 func LimitSaveFiles(files []os.DirEntry, limit int) {
 	if len(files) > limit {
 		for i := limit; i < len(files); i++ {
-			fmt.Println("DEBUG")
 			err := os.Remove(ResolvePath(viper.GetString("backupdirectory")) + files[i].Name())
 			if !check(err, false) {
-				fmt.Println("Could not delete file " + files[i].Name() + ". Check that your current user has full permissions over that file.")
+				if viper.GetBool("EnableLogging") {
+					Log(viper.GetString("LogsPath"), "Could not delete file "+files[i].Name()+". Check that your current user has full permissions over that file.")
+				}
 			}
 		}
 	}
@@ -135,7 +135,6 @@ func CopyFile(src string, dst string) {
 
 func check(err error, exit bool) bool {
 	if err != nil {
-		fmt.Printf("Error : %s\n", err.Error())
 		if viper.GetBool("EnableLogging") {
 			Log(viper.GetString("LogsPath"), "Error "+err.Error()+" encountered.")
 		}
@@ -215,9 +214,6 @@ func StartWatcher(w *watcher.Watcher) {
 	if err := w.Add(ResolvePath(SAVE_PATH)); err != nil {
 		log.Fatalln(err, true)
 	}
-	for path, f := range w.WatchedFiles() {
-		fmt.Printf("%s: %s\n", path, f.Name())
-	}
 	if err := w.Start(time.Millisecond * 100); err != nil {
 		log.Fatalln(err, true)
 	}
@@ -244,6 +240,7 @@ func Log(path string, s string) {
 	defer f.Close()
 
 	logger := log.New(f, "", log.LstdFlags)
+	log.Println(s)
 	logger.Println(s)
 }
 
@@ -316,7 +313,6 @@ func OnStartup() {
 		}
 		SAVE_PATH = strings.Replace(SAVE_PATH, "SteamID", steamid, 1)
 		STEAMID = steamid
-		fmt.Println(SAVE_PATH)
 		if viper.GetBool("EnableLogging") {
 			Log(viper.GetString("LogsPath"), "Saves directory found at "+SAVE_PATH+" for steam id "+STEAMID+".")
 		}
