@@ -136,7 +136,7 @@ func check(err error, exit bool) bool {
 		fmt.Printf("Error : %s\n", err.Error())
 		Popup.Alert("Elden Backup", "Error: "+err.Error())
 		if viper.GetBool("EnableLogging") {
-			Log(viper.GetString("LogsPath"), "Error"+err.Error()+"encountered.")
+			Log(viper.GetString("LogsPath"), "Error "+err.Error()+" encountered.")
 		}
 		if exit {
 			if viper.GetBool("EnableLogging") {
