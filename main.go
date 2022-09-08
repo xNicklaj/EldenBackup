@@ -159,7 +159,7 @@ func ResolvePath(path string) string {
 	return s
 }
 
-func BackupFile(inp_path string, mode int) {
+func BackupFile(inp_path string, mode int) string {
 	bck_path := ResolvePath(viper.GetString("BackupDirectory"))
 	file_path := ResolvePath(inp_path)
 
@@ -191,6 +191,7 @@ func BackupFile(inp_path string, mode int) {
 	if mode == BCK_AUTO && viper.GetInt("limitautobackups") > 0 {
 		LimitSaveFiles(current_files, viper.GetInt("limitautobackups"))
 	}
+	return bck_path
 }
 
 func StartWatcher(w *watcher.Watcher) {
