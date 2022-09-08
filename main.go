@@ -150,10 +150,12 @@ func check(err error, exit bool) bool {
 }
 
 func ResolvePath(path string) string {
-	path = strings.ToLower(path)
 	s := strings.Replace(path, "%appdata%", os.Getenv("APPDATA"), -1)
+	s = strings.Replace(s, "%APPDATA%", os.Getenv("APPDATA"), -1)
 	s = strings.Replace(s, "%localappdata%", os.Getenv("LOCALAPPDATA"), -1)
+	s = strings.Replace(s, "%LOCALAPPDATA%", os.Getenv("LOCALAPPDATA"), -1)
 	s = strings.Replace(s, "%userprofile%", os.Getenv("USERPROFILE"), -1)
+	s = strings.Replace(s, "%USERPROFILE%", os.Getenv("USERPROFILE"), -1)
 	return s
 }
 
@@ -242,6 +244,36 @@ func Log(path string, s string) {
 	logger.Println(s)
 }
 
+func ViperSetup() error {
+	var err error = nil
+	viper.SetDefault("BackupDirectory", "%appdata%\\EldenRingBackup\\")
+	viper.SetDefault("BackupOnStartup", true)
+	viper.SetDefault("BackupIntervalTimeout", 10)
+	viper.SetDefault("UseSeamlessCoop", true)
+	viper.SetDefault("LimitTimeoutBackups", 0)
+	viper.SetDefault("LimitAutoBackups", 0)
+	viper.SetDefault("SavefileDirectory", "%appdata%\\EldenRing\\SteamID\\")
+	viper.SetDefault("EnableLogging", false)
+	viper.SetDefault("LogsPath", ".\\logs.txt")
+	viper.SetDefault("SteamID", 0)
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+
+	if err = viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			_, err = os.Create("./config.yaml")
+			check(err, false)
+			err = viper.WriteConfig()
+			check(err, false)
+		} else {
+			Popup.Alert("Elden Backup", "Unable to read the configuration file. Loading default data. Please, refer to the documentation to solve the issue.")
+		}
+	}
+
+	return err
+}
+
 func OnStartup() {
 	c := 0
 	exName, err := os.Executable()
@@ -263,27 +295,7 @@ func OnStartup() {
 	}
 
 	// SETUP CONFIG FILES
-	viper.SetDefault("BackupDirectory", "%appdata%\\EldenRingBackup\\")
-	viper.SetDefault("BackupOnStartup", true)
-	viper.SetDefault("BackupIntervalTimeout", 10)
-	viper.SetDefault("UseSeamlessCoop", true)
-	viper.SetDefault("LimitTimeoutBackups", 0)
-	viper.SetDefault("LimitAutoBackups", 0)
-	viper.SetDefault("SavefileDirectory", "%appdata%\\EldenRing\\SteamID\\")
-	viper.SetDefault("EnableLogging", false)
-	viper.SetDefault("LogsPath", ".\\logs.txt")
-	viper.SetDefault("SteamID", 0)
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			os.Create("./config.yaml")
-			viper.WriteConfig()
-		} else {
-			Popup.Alert("Elden Backup", "Unable to read the configuration file. Loading default data. Please, refer to the documentation to solve the issue.")
-		}
-	}
+	ViperSetup()
 
 	// Clear log file
 	if viper.GetBool("EnableLogging") {
