@@ -48,7 +48,9 @@ func GetSteamID() string {
 
 	steamid := strings.Replace(out, "\n", "", -1)
 	fs, err := os.ReadDir(ResolvePath("%appdata%\\EldenRing\\"))
-	check(err, true)
+	if check(err, false) {
+		return "0"
+	}
 
 	for _, f := range fs {
 		if f.Name() == steamid {
