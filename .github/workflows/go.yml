@@ -6,6 +6,16 @@ on:
   pull_request:
     branches: [ "main", "dev" ]
 jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18 
+    - name: Go Test
+      run: go test -v
   build:
     runs-on: ubuntu-latest
     steps:
@@ -13,13 +23,9 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.18
+        go-version: 1.18 
     - name: Go Build
       run: go build -ldflags -H=windowsgui -v ./...
-      env:
-        GOOS: windows
-    - name: Go Test
-      run: go test -v
       env:
         GOOS: windows
     - name: Upload a Build Artifact
