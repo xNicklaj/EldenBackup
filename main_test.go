@@ -31,10 +31,10 @@ func Test_ResolveUserprofile(t *testing.T) {
 func Test_BackupFile(t *testing.T) {
 	ViperSetup()
 	fp := viper.GetString("savefiledirectory")
-	fp = strings.Replace(fp, "SteamID", GetSteamID(), -1)
 	fp_out := viper.GetString("backupdirectory")
 
 	// Create save file directory if not exists
+	fp = strings.Replace(fp, "SteamID", GetSteamID(), -1)
 	if _, err := os.Stat(ResolvePath(fp)); err != nil {
 		err = os.MkdirAll(ResolvePath(fp), 0660)
 		assert.Nil(t, err)

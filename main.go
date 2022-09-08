@@ -48,7 +48,7 @@ func GetSteamID() string {
 
 	steamid := strings.Replace(out, "\n", "", -1)
 	fs, err := os.ReadDir(ResolvePath("%appdata%\\EldenRing\\"))
-	if check(err, false) {
+	if !check(err, false) {
 		return "0"
 	}
 
@@ -136,11 +136,11 @@ func CopyFile(src string, dst string) {
 func check(err error, exit bool) bool {
 	if err != nil {
 		fmt.Printf("Error : %s\n", err.Error())
-		Popup.Alert("Elden Backup", "Error: "+err.Error())
 		if viper.GetBool("EnableLogging") {
 			Log(viper.GetString("LogsPath"), "Error "+err.Error()+" encountered.")
 		}
 		if exit {
+			Popup.Alert("Elden Backup", "Error: "+err.Error())
 			if viper.GetBool("EnableLogging") {
 				Log(viper.GetString("LogsPath"), "Shutting down the application due to an error.")
 			}
