@@ -254,6 +254,7 @@ func ViperSetup() error {
 	viper.SetDefault("LimitAutoBackups", 0)
 	viper.SetDefault("SavefileDirectory", "%appdata%\\EldenRing\\SteamID\\")
 	viper.SetDefault("EnableLogging", false)
+	viper.SetDefault("EnableSaveListener", true)
 	viper.SetDefault("LogsPath", ".\\logs.txt")
 	viper.SetDefault("SteamID", 0)
 	viper.SetConfigName("config")
@@ -337,8 +338,10 @@ func OnStartup() {
 
 func main() {
 	OnStartup()
-	wHandle = watcher.New()
-	go StartWatcher(wHandle)
+	if viper.GetBool("EnableSaveListener") {
+		wHandle = watcher.New()
+		go StartWatcher(wHandle)
+	}
 	systray.Run(onReady, onExit)
 }
 

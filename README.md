@@ -56,6 +56,7 @@ There are three different types of backup:
 - `BackupIntervalTimeout`, this is the time in minutes between the timeout backups. By default five minutes, `10`.
 - `BackupOnStartup`, this specifies whether Elden Backup will perform a backup upon startup. By default `true`.
 - `EnableLogging`, this specifies whether to create logs or not. By default `true`.
+- `EnableSaveListener`, this option enables the automatic backups whenever the game edits the save files. By default `true`.
 - `LimitTimeoutBackups`, this option allows Elden Backup to only keep a certain number of timeout backups in the backup folder when set to a value greater than zero. By default this is set to `0`.
 - `LimitAutoBackups`, this option allows Elden Backup to only keep a certain number of auto backups in the backup folder when set to a value greater than zero. By default this is set to `0`.
 - `LogsPath`, this options allows to specify the path of the file in which you want Elden Backup to save its logs. Defaults to `'.\logs.txt'`.
@@ -77,6 +78,7 @@ To restore a backup, all you have to do is to copy-paste it inside `%appdata%/El
 - [x] Timeout backups.
 - [x] Save space by deleting older backups.
 - [x] Automatic detection of the SteamID.
+- [X] Log events to improve troubleshooting.
 - [ ] Optionally launch Elden Ring or the Seamless Coop launcher automatically.
 - [ ] Add EXE metadata.
 
