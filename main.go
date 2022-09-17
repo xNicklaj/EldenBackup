@@ -128,14 +128,15 @@ func CopyFile(src string, dst string) {
 	defer srcFile.Close()
 
 	destFile, err := os.Create(dst) // creates if file doesn't exist
-	check(err, true)
-	defer destFile.Close()
+	if check(err, false) {
+		defer destFile.Close()
+		_, err = io.Copy(destFile, srcFile) // check first var for number of bytes copied
+		if check(err, false) {
+			err = destFile.Sync()
+			check(err, false)
+		}
+	}
 
-	_, err = io.Copy(destFile, srcFile) // check first var for number of bytes copied
-	check(err, true)
-
-	err = destFile.Sync()
-	check(err, true)
 }
 
 func check(err error, exit bool) bool {
