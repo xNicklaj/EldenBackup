@@ -14,14 +14,14 @@ import (
 
 	"github.com/ChromeTemp/Popup"
 	"github.com/abdfnx/gosh"
+	"github.com/fsnotify/fsnotify"
 	"github.com/getlantern/systray"
 	"github.com/gouniverse/utils"
 	"github.com/mitchellh/go-ps"
-	"github.com/radovskyb/watcher"
 	"github.com/spf13/viper"
 )
 
-var wHandle *watcher.Watcher
+var wHandle *fsnotify.Watcher
 var quit chan bool
 var STEAMID string
 var Logger *log.Logger
@@ -36,6 +36,11 @@ const (
 	BCK_MANUAL  int = 1
 	BCK_AUTO    int = 2
 	BCK_TIMEOUT int = 3
+)
+
+const (
+	LOG_FATAL int = 0
+	LOG_DEBUG int = 1
 )
 
 func GetSteamID() string {
@@ -72,7 +77,7 @@ func LimitSaveFiles(files []os.DirEntry, limit int) {
 			err := os.Remove(ResolvePath(viper.GetString("backupdirectory")) + files[i].Name())
 			if !check(err, false) {
 				if viper.GetBool("EnableLogging") {
-					Log(viper.GetString("LogsPath"), "Could not delete file "+files[i].Name()+". Check that your current user has full permissions over that file.")
+					Log(viper.GetString("LogsPath"), "Could not delete file "+files[i].Name()+". Check that your current user has full permissions over that file.", LOG_DEBUG)
 				}
 			}
 		}
@@ -136,12 +141,12 @@ func CopyFile(src string, dst string) {
 func check(err error, exit bool) bool {
 	if err != nil {
 		if viper.GetBool("EnableLogging") {
-			Log(viper.GetString("LogsPath"), "Error "+err.Error()+" encountered.")
+			Log(viper.GetString("LogsPath"), "Error "+err.Error()+" encountered.", LOG_FATAL)
 		}
 		if exit {
 			Popup.Alert("Elden Backup", "Error: "+err.Error())
 			if viper.GetBool("EnableLogging") {
-				Log(viper.GetString("LogsPath"), "Shutting down the application due to an error.")
+				Log(viper.GetString("LogsPath"), "Shutting down the application due to an error.", LOG_FATAL)
 			}
 			os.Exit(-1)
 		}
@@ -182,7 +187,7 @@ func BackupFile(inp_path string, mode int) string {
 	}
 	CopyFile(file_path, bck_path)
 	if viper.GetBool("EnableLogging") {
-		Log(viper.GetString("LogsPath"), "Backup executed at "+bck_path+".")
+		Log(viper.GetString("LogsPath"), "Backup executed at "+bck_path+".", LOG_DEBUG)
 	}
 
 	current_files := utils.ArrayReverse(ListBackupsOfType(mode))
@@ -195,27 +200,30 @@ func BackupFile(inp_path string, mode int) string {
 	return bck_path
 }
 
-func StartWatcher(w *watcher.Watcher) {
-	w.FilterOps(watcher.Write)
+func StartWatcher(w *fsnotify.Watcher) {
 	go func() {
 		for {
 			select {
-			case event := <-w.Event:
-				if filepath.Base(event.Path) == GetSaveName() {
-					BackupFile(event.Path, BCK_AUTO)
+			case event, ok := <-w.Events:
+				if !ok {
+					return
 				}
-			case err := <-w.Error:
-				log.Fatalln(err, true)
-			case <-w.Closed:
-				return
+				if event.Op&fsnotify.Write != fsnotify.Write {
+					break
+				}
+				if filepath.Base(event.Name) == GetSaveName() {
+					BackupFile(event.Name, BCK_AUTO)
+				}
+			case err, ok := <-w.Errors:
+				if !ok {
+					return
+				}
+				check(err, false)
 			}
 		}
 	}()
 	if err := w.Add(ResolvePath(SAVE_PATH)); err != nil {
-		log.Fatalln(err, true)
-	}
-	if err := w.Start(time.Millisecond * 100); err != nil {
-		log.Fatalln(err, true)
+		check(err, false)
 	}
 }
 
@@ -232,7 +240,7 @@ func IntervalledBackup(delay int) {
 	}
 }
 
-func Log(path string, s string) {
+func Log(path string, s string, level int) {
 	f, err := os.OpenFile(ResolvePath(path), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -240,8 +248,15 @@ func Log(path string, s string) {
 	defer f.Close()
 
 	logger := log.New(f, "", log.LstdFlags)
-	log.Println(s)
-	logger.Println(s)
+	switch level {
+	case LOG_DEBUG:
+		log.Println(s)
+		logger.Println(s)
+	case LOG_FATAL:
+		logger.Fatal(s)
+		log.Fatal(s)
+	}
+
 }
 
 func ViperSetup() error {
@@ -301,7 +316,7 @@ func OnStartup() {
 	// Clear log file
 	if viper.GetBool("EnableLogging") {
 		if err := os.Truncate(viper.GetString("LogsPath"), 0); err != nil {
-			log.Printf("Failed to clear: %v", err)
+			check(err, false)
 		}
 	}
 
@@ -315,7 +330,7 @@ func OnStartup() {
 		SAVE_PATH = strings.Replace(SAVE_PATH, "SteamID", steamid, 1)
 		STEAMID = steamid
 		if viper.GetBool("EnableLogging") {
-			Log(viper.GetString("LogsPath"), "Saves directory found at "+SAVE_PATH+" for steam id "+STEAMID+".")
+			Log(viper.GetString("LogsPath"), "Saves directory found at "+SAVE_PATH+" for steam id "+STEAMID+".", LOG_DEBUG)
 		}
 	}
 
@@ -325,6 +340,10 @@ func OnStartup() {
 	if errors.Is(err, os.ErrNotExist) {
 		Popup.Alert(APP_TITLE, "No save file was found. Start your adventure and then open "+APP_TITLE+".")
 		os.Exit(0)
+	}
+
+	if viper.GetBool("EnableLogging") {
+		Log(viper.GetString("LogsPath"), "The application has been correctly started.", LOG_DEBUG)
 	}
 
 	if viper.GetBool("backuponstartup") {
@@ -339,7 +358,9 @@ func OnStartup() {
 func main() {
 	OnStartup()
 	if viper.GetBool("EnableSaveListener") {
-		wHandle = watcher.New()
+		var err error
+		wHandle, err = fsnotify.NewWatcher()
+		check(err, true)
 		go StartWatcher(wHandle)
 	}
 	systray.Run(onReady, onExit)
@@ -361,7 +382,7 @@ func onReady() {
 			select {
 			case <-bckMenu.ClickedCh:
 				if viper.GetBool("EnableLogging") {
-					Log(viper.GetString("LogsPath"), "Manual backup requested via system tray.")
+					Log(viper.GetString("LogsPath"), "Manual backup requested via system tray.", LOG_DEBUG)
 				}
 				BackupFile(SAVE_PATH+GetSaveName(), BCK_MANUAL)
 			case <-quitMenu.ClickedCh:
