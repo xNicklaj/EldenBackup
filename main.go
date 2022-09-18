@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -130,6 +131,7 @@ func CopyFile(src string, dst string) {
 	destFile, err := os.Create(dst) // creates if file doesn't exist
 	if check(err, false) {
 		defer destFile.Close()
+
 		_, err = io.Copy(destFile, srcFile) // check first var for number of bytes copied
 		if check(err, false) {
 			err = destFile.Sync()
@@ -143,6 +145,7 @@ func check(err error, exit bool) bool {
 	if err != nil {
 		if viper.GetBool("EnableLogging") {
 			Log(viper.GetString("LogsPath"), "Error "+err.Error()+" encountered.", LOG_FATAL)
+			Log(viper.GetString("LogsPath"), string(debug.Stack()), LOG_FATAL)
 		}
 		if exit {
 			Popup.Alert("Elden Backup", "Error: "+err.Error())
