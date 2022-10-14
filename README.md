@@ -38,7 +38,7 @@ Update: you can now download the latest release in the [release tab](https://git
 When you will open the executable, an icon will popup in the system tray, at the bottom-right of you screen. Right clicking on it will allow you to either close the app or execute a backup immediately.
 
 There are three different types of backup:
- - **A**utomatic backup, this happens while you play, and at the end of your session you will have one of these backups per day. If your game crashes and somethings gets corrupted, this is the type of backup you can refer to.
+ - **A**utomatic backup, this happens while you play, and at the end of your session you will have one of these backups per day. If your game crashes and somethings gets corrupted, this is the type of backup you can refer to. NOTE: This feature is currently broken due to crashes on race conditions. Use only timeout backups.
  - **M**anual backup, this backup happens only when you click on "Backup now" from the system tray.
  - **S**tartup backup, this backup happens every time you open EldenBackup.
  - **T**imeout backup, this backup happens every once in a while when you play. By default, it happens every five minutes, but you will be able to change the amount of time between these backups from the configuration file. 
