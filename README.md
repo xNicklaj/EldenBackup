@@ -53,7 +53,7 @@ There are three different types of backup:
  What follows is a list of all the different configuration options:
  
 - `BackupDirectory`, this is the directory in which all your saves will be backed up. By default this will be `'%appdata%/EldenRingBackup'`.
-- `BackupIntervalTimeout`, this is the time in minutes between the timeout backups. By default five minutes, `10`.
+- `BackupIntervalTimeout`, this is the time in minutes between the timeout backups. By default ten minutes, `10`.
 - `BackupOnStartup`, this specifies whether Elden Backup will perform a backup upon startup. By default `true`.
 - `EnableLogging`, this specifies whether to create logs or not. By default `true`.
 - `EnableSaveListener`, this option enables the automatic backups whenever the game edits the save files. By default `true`.
